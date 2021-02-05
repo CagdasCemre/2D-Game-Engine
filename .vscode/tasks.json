@@ -1,0 +1,35 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Compile Game",
+        "type": "shell",
+        "command": "g++",
+        "args": [
+          "${workspaceFolder}/src/*.cpp",
+          "-o",
+          "bin/game",
+          "-I",
+          "${workspaceFolder}/include",
+          "-L${workspaceFolder}/lib/SDL2",
+          "-lmingw32",
+          "-lSDL2main",
+          "-lSDL2",
+          "-lSDL2_image"
+        ],
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Run Game",
+        "type": "shell",
+        "command": "./bin/game",
+        "args": [],
+        "dependsOn": "Compile Game",
+        "problemMatcher": []
+      }
+    ]
+  }
