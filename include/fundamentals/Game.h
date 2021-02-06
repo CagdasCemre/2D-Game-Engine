@@ -29,6 +29,7 @@ public:
 
     static SDL_Renderer* renderer;
     static AssetManager* assetManager;
+    static SDL_Event event;
 
     void loadLevel(int levelNumber);
     bool isRunning() const;

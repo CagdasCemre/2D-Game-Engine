@@ -36,6 +36,17 @@ public:
         //update the position/velocity as a function of deltaTime
         position.x += velocity.x * deltaTime;
         position.y += velocity.y * deltaTime;
+
+        if(position.x > WINDOW_WIDTH-width){
+            position.x = WINDOW_WIDTH-width;
+        }else if(position.x < 0){
+            position.x = 0;
+        }
+        if(position.y > WINDOW_HEIGHT-height){
+            position.y = WINDOW_HEIGHT-height;
+        }else if(position.y < 0){
+            position.y = 0;
+        }
     }
     
     void render() override{

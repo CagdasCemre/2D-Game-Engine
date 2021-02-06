@@ -72,21 +72,21 @@ public:
             Animation leftAnimation = Animation(2, numFrames, animationSpeed);
             Animation upAnimation = Animation(3, numFrames, animationSpeed);
 
-            animations.emplace("DownAnimation", downAnimation);
-            animations.emplace("RightAnimation", rightAnimation);
-            animations.emplace("LeftAnimation", leftAnimation);
-            animations.emplace("UpAnimation", upAnimation);
+            animations.emplace("downAnimation", downAnimation);
+            animations.emplace("rightAnimation", rightAnimation);
+            animations.emplace("leftAnimation", leftAnimation);
+            animations.emplace("upAnimation", upAnimation);
 
             this->animationIndex = 0;
-            this->currentAnimationName = "DownAnimation";
+            this->currentAnimationName = "downAnimation";
         }
         else
         {
             Animation singleAnimation = Animation(0, numFrames, animationSpeed);
-            animations.emplace("SingleAnimation", singleAnimation);
+            animations.emplace("singleAnimation", singleAnimation);
 
             this->animationIndex = 0;
-            this->currentAnimationName = "SingleAnimation";
+            this->currentAnimationName = "singleAnimation";
         }
 
         play(this->currentAnimationName);
