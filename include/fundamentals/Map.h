@@ -16,6 +16,8 @@ public:
 
     void loadMap(std::string filePath, int mapSizeX, int mapSizeY);
     void addTile(int sourceX, int sourceY, int x, int y);
+
+    int getScale();
 };
 
 #endif

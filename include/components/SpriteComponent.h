@@ -32,6 +32,7 @@ public:
         sourceRectangle.w = transform->width;
         sourceRectangle.h = transform->height;
     }
+
     void update(float) override
     {
         if (animated)
@@ -40,8 +41,8 @@ public:
         }
         sourceRectangle.y = animationIndex * transform->height;
 
-        destinationRectangle.x = static_cast<int>(transform->position.x);
-        destinationRectangle.y = static_cast<int>(transform->position.y);
+        destinationRectangle.x = static_cast<int>(transform->position.x) - (fixed ? 0:Game::camera.x);
+        destinationRectangle.y = static_cast<int>(transform->position.y) - (fixed ? 0:Game::camera.y);
         destinationRectangle.w = transform->width * transform->scale;
         destinationRectangle.h = transform->height * transform->scale;
     }

@@ -34,19 +34,15 @@ public:
     
     void update(float deltaTime) override{
         //update the position/velocity as a function of deltaTime
+        int mapScale = Game::map->getScale();
+
         position.x += velocity.x * deltaTime;
         position.y += velocity.y * deltaTime;
 
-        if(position.x > WINDOW_WIDTH-width){
-            position.x = WINDOW_WIDTH-width;
-        }else if(position.x < 0){
-            position.x = 0;
-        }
-        if(position.y > WINDOW_HEIGHT-height){
-            position.y = WINDOW_HEIGHT-height;
-        }else if(position.y < 0){
-            position.y = 0;
-        }
+        position.x = position.x < 0 ? 0 : position.x;
+        position.y = position.y < 0 ? 0 : position.y;
+        position.x = position.x > (Game::camera.w * mapScale) - width ? (Game::camera.w * mapScale) - width : position.x;
+        position.y = position.y > (Game::camera.h * mapScale ) - height ? (Game::camera.h * mapScale ) - height : position.y;
     }
     
     void render() override{

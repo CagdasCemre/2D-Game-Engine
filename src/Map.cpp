@@ -40,3 +40,7 @@ void Map::addTile(int sourceRectX, int sourceRectY, int x, int y)
     Entity& newTile(manager.addEntity("Tile", LayerType::TILEMAP_LAYER));
     newTile.addComponent<TileComponent>(sourceRectX, sourceRectY, x, y, tileSize,scale, textureId);
 }
+
+int Map::getScale(){
+    return scale;
+}
