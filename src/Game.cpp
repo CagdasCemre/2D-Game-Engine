@@ -1,14 +1,17 @@
-#include "fundamentals/Game.h"
+#include <fundamentals/Game.h>
+#include <fundamentals/AssetManager.h>
+#include <fundamentals/Map.h>
 
-#include "components/TransformComponent.h"
-#include "components/SpriteComponent.h"
-#include "components/KeyboardControlComponent.h"
-#include "fundamentals/AssetManager.h"
+#include <components/TransformComponent.h>
+#include <components/SpriteComponent.h>
+#include <components/KeyboardControlComponent.h>
+
 
 EntityManager manager;
 AssetManager* Game::assetManager = new AssetManager(&manager);
 SDL_Renderer* Game::renderer;
 SDL_Event Game::event;
+Map *map;
 
 Game::Game()
 {
@@ -54,19 +57,23 @@ void Game::loadLevel(int levelNumber){
     assetManager->addTexture("chopper-image", std::string("./assets/images/chopper-spritesheet.png").c_str());
     assetManager->addTexture("radar-image", std::string("./assets/images/radar.png").c_str());
 
-
-    Entity& tankEntity = manager.addEntity("tank");
-    tankEntity.addComponent<TransformComponent>(0, 0, 0, 0, 32, 32, 1);
-    tankEntity.addComponent<SpriteComponent>("tank-image");
+    assetManager->addTexture("jungle-tiletexture", std::string("./assets/tilemaps/jungle.png").c_str());
+    map = new Map("jungle-tiletexture", 1, 32);
+    map->loadMap("./assets/tilemaps/jungle.map", 25, 20);
 
     
-    Entity& chopperEntity = manager.addEntity("chopper");
+    Entity& tankEntity = manager.addEntity("tank", LayerType::ENEMY_LAYER);
+    tankEntity.addComponent<TransformComponent>(0, 0, 0, 0, 32, 32, 1);
+    tankEntity.addComponent<SpriteComponent>("tank-image");
+    
+    
+    Entity& chopperEntity = manager.addEntity("chopper", LayerType::PLAYER_LAYER);
     chopperEntity.addComponent<TransformComponent>(WINDOW_WIDTH/2, 0, 0, 0, 32, 32, 1);
     chopperEntity.addComponent<SpriteComponent>("chopper-image",2 ,90, true, false);
     chopperEntity.addComponent<KeyboardControlComponent>("w", "s", "d", "a", "space");
     
 
-    Entity& radarEntity = manager.addEntity("Radar");
+    Entity& radarEntity = manager.addEntity("Radar", LayerType::UI_LAYER);
     radarEntity.addComponent<TransformComponent>(720, 15, 0, 0, 64, 64, 1);
     radarEntity.addComponent<SpriteComponent>("radar-image", 8 ,150, false, true);
     

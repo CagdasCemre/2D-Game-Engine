@@ -5,7 +5,7 @@
 #include <vector>
 #include <map>
 #include <string>
-
+#include "Constants.h"
 
 class Component;// Forward Decleration
 class EntityManager;// Forward Decleration
@@ -20,12 +20,13 @@ private:
 
 public:
     std::string name;
+    LayerType layer;
     std::vector<Component*> components;
     std::map<const std::type_info*,Component*> componentTypeMap;
 
 public:
     Entity(EntityManager& manager);
-    Entity(EntityManager& manager, std::string name);
+    Entity(EntityManager& manager, std::string name, LayerType layer);
     virtual ~Entity();
 
     bool isActive() const;
