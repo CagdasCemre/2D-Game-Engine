@@ -1,8 +1,8 @@
 #ifndef TRANSFORMCOMPONENT_H_
 #define TRANSFORMCOMPONENT_H_
 
-#include "fundamentals/EntityManager.h"
-#include "fundamentals/Game.h"
+#include <fundamentals/Game.h>
+#include <fundamentals/Map.h>
 
 #include <glm/glm.hpp>
 #include <SDL2/SDL.h>

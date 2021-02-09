@@ -1,5 +1,5 @@
-#ifndef TILECOMPOENENT_H_
-#define TILECOMPOENENT_H_
+#ifndef TILECOMPONENT_H_
+#define TILECOMPONENT_H_
 
 #include <fundamentals/EntityManager.h>
 #include <fundamentals/AssetManager.h>

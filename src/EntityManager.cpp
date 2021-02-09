@@ -1,4 +1,6 @@
 #include "fundamentals/EntityManager.h"
+#include "fundamentals/Collision.h"
+#include <components/ColliderComponent.h>
 
 #include <iostream>
 
@@ -64,4 +66,19 @@ void EntityManager::listAllEntities() const{
         std::cout << "Entity Name: " << e->name << std::endl;
         e->listAllComponents();
     }
+}
+
+std::string EntityManager::checkEntityCollisions(Entity& myEntity) const{
+    ColliderComponent* myCollider = myEntity.getComponent<ColliderComponent>();
+    for(auto& entity : entities){
+        if(entity->name.compare(myEntity.name) == 0 || entity->name.compare("Tile") == 0) 
+            continue;
+        if(entity->hasComponent<ColliderComponent>()){
+            ColliderComponent* otherCollider = entity->getComponent<ColliderComponent>();
+            if(Collision::checkRectCollision(myCollider->collider, otherCollider->collider)){
+                return otherCollider->colliderTag;
+            }
+        }
+    }
+    return std::string();
 }

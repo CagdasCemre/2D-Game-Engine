@@ -3,7 +3,6 @@
 
 
 #include <fundamentals/EntityManager.h>
-#include <fundamentals/Game.h>
 
 #include "TransformComponent.h"
 
@@ -24,9 +23,11 @@ public:
     }
 
     void initialize() override{
-        transform = owner->getComponent<TransformComponent>();
-        sourceRectangel  = {0, 0, transform->width, transform->height};
-        destinationRectangle  = {collider.x, collider.y, collider.w, collider.h};     
+        if(owner->hasComponent<TransformComponent>()){
+            transform = owner->getComponent<TransformComponent>();
+            sourceRectangel  = {0, 0, transform->width, transform->height};
+            destinationRectangle  = {collider.x, collider.y, collider.w, collider.h}; 
+        }    
     }
 
 

@@ -1,7 +1,6 @@
 #ifndef ENTITYMANAGER_H_
 #define ENTITYMANAGER_H_
 
-#include "Entity.h"
 #include "Component.h"
 
 #include <vector>
@@ -23,7 +22,9 @@ public:
     Entity& addEntity(std::string entityName, LayerType layer);
     std::vector<Entity*> getEntities() const;
     std::vector<Entity*> getEntitiesByLayer(LayerType layer) const;
+    std::string checkEntityCollisions(Entity& myEntity) const;
     unsigned int getEntityCount();
+
 
     void listAllEntities() const;
 };

@@ -36,12 +36,16 @@ public:
 
     void handleCameraMovement();
     void loadLevel(int levelNumber);
+    void checkCollisions();
+
     bool isRunning() const;
+
     void initialize(int width, int height);
     void processInput();
     void update();
     void render();
     void destroy();
+    
    
 };
 
