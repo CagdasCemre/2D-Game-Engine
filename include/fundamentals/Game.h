@@ -17,6 +17,10 @@ class Map;
 
 class Game
 {
+
+public:
+    static bool debug;
+
 private:
     int ticksLastFrame{0};
 
@@ -28,11 +32,11 @@ public:
     Game();
     virtual ~Game();
 
-    static SDL_Renderer* renderer;
-    static AssetManager* assetManager;
+    static SDL_Renderer *renderer;
+    static AssetManager *assetManager;
     static SDL_Event event;
     static SDL_Rect camera;
-    static Map* map;
+    static Map *map;
 
     void handleCameraMovement();
     void loadLevel(int levelNumber);
@@ -45,10 +49,6 @@ public:
     void update();
     void render();
     void destroy();
-    
-   
 };
-
-
 
 #endif

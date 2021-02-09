@@ -14,6 +14,9 @@ SDL_Renderer* Game::renderer;
 SDL_Event Game::event;
 SDL_Rect Game::camera = {0, 0, WINDOW_WIDTH, WINDOW_HEIGHT};
 Map* Game::map;
+bool Game::debug = false;
+
+int prev;
 
 Entity& chopperEntity = manager.addEntity("chopper", LayerType::PLAYER_LAYER);
 
@@ -71,6 +74,7 @@ void Game::loadLevel(int levelNumber){
     tankEntity.addComponent<TransformComponent>(0, 0, 0, 0, 32, 32, 1);
     tankEntity.addComponent<SpriteComponent>("tank-image");
     tankEntity.addComponent<ColliderComponent>("enemy", 0, 0, 32, 32);
+    tankEntity.addComponent<KeyboardControlComponent>("up", "down", "right", "left", "space");
     
     chopperEntity.addComponent<TransformComponent>(WINDOW_WIDTH/2, 0, 0, 0, 32, 32, 1);
     chopperEntity.addComponent<SpriteComponent>("chopper-image",2 ,90, true, false);
@@ -106,8 +110,16 @@ void Game::processInput(){
 
         if(event.key.keysym.sym == SDLK_ESCAPE){
             running = false;
+        }else if(prev != SDLK_F1 && event.key.keysym.sym == SDLK_F1){
+            Game::debug = !debug;
+            std::cout << prev << " " << SDLK_F1 << std::endl;
+            prev = SDLK_F1;
         }
 
+        break;
+
+    case SDL_KEYUP:
+        prev = 0;
         break;
     default:
         break;

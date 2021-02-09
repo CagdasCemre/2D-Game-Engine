@@ -1,6 +1,7 @@
 #ifndef COLLIDERCOMPONENT_H_
 #define COLLIDERCOMPONENT_H_
 
+#include <SDL2/SDL.h>
 
 #include <fundamentals/EntityManager.h>
 
@@ -41,7 +42,12 @@ public:
         destinationRectangle.y = collider.y - Game::camera.y;
     }
 
-    void render()override{}
+    void render()override{
+        if(Game::debug){
+        SDL_SetRenderDrawColor(Game::renderer, 255, 0, 0, 255);
+        SDL_RenderDrawRect(Game::renderer, &destinationRectangle);
+        }  
+    }
 };
 
 #endif
