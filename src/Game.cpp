@@ -7,6 +7,7 @@
 #include <components/KeyboardControlComponent.h>
 #include <components/ColliderComponent.h>
 #include <components/TextLabelComponent.h>
+#include <components/ProjectileEmitterComponent.h>
 
 
 EntityManager manager;
@@ -66,7 +67,7 @@ void Game::initialize(int width, int height)
 
 void Game::loadLevel(int levelNumber){
     
-    
+    assetManager->addTexture("projectile-image", std::string("./assets/images/bullet-friendly.png").c_str());
     assetManager->addTexture("tank-image", std::string("./assets/images/tank-big-right.png").c_str());
     assetManager->addTexture("chopper-image", std::string("./assets/images/chopper-spritesheet.png").c_str());
     assetManager->addTexture("radar-image", std::string("./assets/images/radar.png").c_str());
@@ -82,7 +83,7 @@ void Game::loadLevel(int levelNumber){
     tankEntity.addComponent<SpriteComponent>("tank-image");
     tankEntity.addComponent<ColliderComponent>("enemy", 0, 0, 32, 32);
     tankEntity.addComponent<KeyboardControlComponent>("up", "down", "right", "left", "space");
-    
+
     chopperEntity.addComponent<TransformComponent>(240, 106, 0, 0, 32, 32, 1);
     chopperEntity.addComponent<SpriteComponent>("chopper-image",2 ,90, true, false);
     chopperEntity.addComponent<KeyboardControlComponent>("w", "s", "d", "a", "space");
@@ -123,6 +124,12 @@ void Game::processInput(){
             Game::debug = !debug;
             std::cout << "Debug ON" << std::endl;
             prev = SDLK_F1;
+        }else if(prev != SDLK_SPACE && event.key.keysym.sym == SDLK_SPACE){
+            Entity& projectile = manager.addEntity("projectile", LayerType::PROJECTILE_LAYER);
+            projectile.addComponent<TransformComponent>(150+16, 500+16, 0, 0, 4, 4, 1);
+            projectile.addComponent<SpriteComponent>("projectile-image");
+            projectile.addComponent<ColliderComponent>("projectile", 150+16, 500+16, 4, 4);
+            projectile.addComponent<ProjectileEmitterComponent>(50, 270, 200, false);
         }
 
         break;
@@ -200,7 +207,8 @@ void Game::checkCollisions(){
     std::string collisionTagType = manager.checkEntityCollisions(chopperEntity);
     if(collisionTagType.compare("enemy") == 0){
         //TODO: do something
-        manager.removeEntity("tank");
+        manager.getEntityByName("tank")->destroy();
+        manager.getEntityByName("projectile")->destroy();
     }
 }
 

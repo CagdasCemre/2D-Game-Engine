@@ -20,7 +20,8 @@ public:
     void clearData();
     bool hasNoEntities() const;
     Entity& addEntity(std::string entityName, LayerType layer);
-    void removeEntity(std::string entityName);
+    Entity* getEntityByName(std::string entityName); // Handle this for collision
+    void destroyInactiveEntities();
     std::vector<Entity*> getEntities() const;
     std::vector<Entity*> getEntitiesByLayer(LayerType layer) const;
     std::string checkEntityCollisions(Entity& myEntity) const;

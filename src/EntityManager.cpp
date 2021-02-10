@@ -26,6 +26,15 @@ void EntityManager::update(float deltaTime){
     for(auto& entity: entities){
         entity->update(deltaTime);
     }
+    destroyInactiveEntities();
+}
+
+void EntityManager::destroyInactiveEntities(){
+    for(int i = 0 ; i < entities.size() ; i++){
+        if(!entities[i]->isActive()){
+            entities.erase(entities.begin()+i);
+        }
+    }
 }
 
 void EntityManager::render(){
@@ -43,14 +52,6 @@ Entity& EntityManager::addEntity(std::string entityName, LayerType layer){
     return *entity;
 }
 
-void EntityManager::removeEntity(std::string entityName){
-    for(int i = 0 ; i < entities.size() ; i++){
-        if(entities[i]->name.compare(entityName) == 0){
-            entities.erase(entities.begin()+i);
-        }
-    }
-}
-
 std::vector<Entity*> EntityManager::getEntities() const{
     return entities;
 }
@@ -63,6 +64,14 @@ std::vector<Entity*> EntityManager::getEntitiesByLayer(LayerType layer) const{
         }
     }
     return temp;
+}
+
+Entity* EntityManager::getEntityByName(std::string entityName){
+    for(auto entity : entities){
+        if(entity->name.compare(entityName) == 0){
+            return entity;
+        }
+    }
 }
 
 unsigned int EntityManager::getEntityCount(){

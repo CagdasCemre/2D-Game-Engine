@@ -3,7 +3,7 @@
 
 #include <string>
 
-class SpriteCompoenent;
+class SpriteComponent;
 
 class Animation
 {
