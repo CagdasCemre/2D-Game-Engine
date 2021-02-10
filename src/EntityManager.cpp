@@ -43,6 +43,14 @@ Entity& EntityManager::addEntity(std::string entityName, LayerType layer){
     return *entity;
 }
 
+void EntityManager::removeEntity(std::string entityName){
+    for(int i = 0 ; i < entities.size() ; i++){
+        if(entities[i]->name.compare(entityName) == 0){
+            entities.erase(entities.begin()+i);
+        }
+    }
+}
+
 std::vector<Entity*> EntityManager::getEntities() const{
     return entities;
 }

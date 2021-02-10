@@ -6,6 +6,7 @@
 #include <components/SpriteComponent.h>
 #include <components/KeyboardControlComponent.h>
 #include <components/ColliderComponent.h>
+#include <components/TextLabelComponent.h>
 
 
 EntityManager manager;
@@ -37,6 +38,11 @@ void Game::initialize(int width, int height)
         return;
     }
 
+    if(TTF_Init() != 0){
+        std::cerr << "Error initializing SDL TTF" << std::endl;
+        
+    }
+
     window = SDL_CreateWindow("Game Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
 
     if(!window){
@@ -64,6 +70,7 @@ void Game::loadLevel(int levelNumber){
     assetManager->addTexture("tank-image", std::string("./assets/images/tank-big-right.png").c_str());
     assetManager->addTexture("chopper-image", std::string("./assets/images/chopper-spritesheet.png").c_str());
     assetManager->addTexture("radar-image", std::string("./assets/images/radar.png").c_str());
+    assetManager->addFont("charriot-font", std::string("./assets/fonts/charriot.ttf").c_str(), 14);
 
     assetManager->addTexture("jungle-tiletexture", std::string("./assets/tilemaps/jungle.png").c_str());
     map = new Map("jungle-tiletexture", 2, 32);
@@ -71,12 +78,12 @@ void Game::loadLevel(int levelNumber){
 
     
     Entity& tankEntity = manager.addEntity("tank", LayerType::ENEMY_LAYER);
-    tankEntity.addComponent<TransformComponent>(0, 0, 0, 0, 32, 32, 1);
+    tankEntity.addComponent<TransformComponent>(150, 500, 0, 0, 32, 32, 1);
     tankEntity.addComponent<SpriteComponent>("tank-image");
     tankEntity.addComponent<ColliderComponent>("enemy", 0, 0, 32, 32);
     tankEntity.addComponent<KeyboardControlComponent>("up", "down", "right", "left", "space");
     
-    chopperEntity.addComponent<TransformComponent>(WINDOW_WIDTH/2, 0, 0, 0, 32, 32, 1);
+    chopperEntity.addComponent<TransformComponent>(240, 106, 0, 0, 32, 32, 1);
     chopperEntity.addComponent<SpriteComponent>("chopper-image",2 ,90, true, false);
     chopperEntity.addComponent<KeyboardControlComponent>("w", "s", "d", "a", "space");
     chopperEntity.addComponent<ColliderComponent>("player", WINDOW_WIDTH/2, 0, 32, 32);
@@ -86,6 +93,8 @@ void Game::loadLevel(int levelNumber){
     radarEntity.addComponent<TransformComponent>(720, 15, 0, 0, 64, 64, 1);
     radarEntity.addComponent<SpriteComponent>("radar-image", 8 ,150, false, true);
     
+    Entity& labelLevelName(manager.addEntity("LabelLevelName", LayerType::UI_LAYER));
+    labelLevelName.addComponent<TextLabelComponent>(10, 10, "First Level...", "charriot-font", WHITE_COLOR);
 
 
     //manager.listAllEntities();
@@ -112,7 +121,7 @@ void Game::processInput(){
             running = false;
         }else if(prev != SDLK_F1 && event.key.keysym.sym == SDLK_F1){
             Game::debug = !debug;
-            std::cout << prev << " " << SDLK_F1 << std::endl;
+            std::cout << "Debug ON" << std::endl;
             prev = SDLK_F1;
         }
 
@@ -191,7 +200,7 @@ void Game::checkCollisions(){
     std::string collisionTagType = manager.checkEntityCollisions(chopperEntity);
     if(collisionTagType.compare("enemy") == 0){
         //TODO: do something
-        running = false;
+        manager.removeEntity("tank");
     }
 }
 
