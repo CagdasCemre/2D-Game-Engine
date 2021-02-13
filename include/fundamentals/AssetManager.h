@@ -5,6 +5,7 @@
 #include <string>
 
 #include <SDL2/SDL_ttf.h>
+#include <lua/sol.hpp>
 
 #include "fundamentals/EntityManager.h"
 #include "fundamentals/TextureManager.h"

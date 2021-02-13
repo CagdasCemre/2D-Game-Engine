@@ -72,6 +72,7 @@ Entity* EntityManager::getEntityByName(std::string entityName){
             return entity;
         }
     }
+    return nullptr;
 }
 
 unsigned int EntityManager::getEntityCount(){

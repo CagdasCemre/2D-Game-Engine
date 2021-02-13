@@ -9,18 +9,17 @@
 #include <components/TextLabelComponent.h>
 #include <components/ProjectileEmitterComponent.h>
 
-
 EntityManager manager;
-AssetManager* Game::assetManager = new AssetManager(&manager);
-SDL_Renderer* Game::renderer;
+AssetManager *Game::assetManager = new AssetManager(&manager);
+SDL_Renderer *Game::renderer;
 SDL_Event Game::event;
 SDL_Rect Game::camera = {0, 0, WINDOW_WIDTH, WINDOW_HEIGHT};
-Map* Game::map;
+Map *Game::map;
 bool Game::debug = false;
 
 int prev;
 
-Entity& chopperEntity = manager.addEntity("chopper", LayerType::PLAYER_LAYER);
+Entity *mainPlayer;
 
 Game::Game()
 {
@@ -32,21 +31,23 @@ Game::~Game()
 }
 
 void Game::initialize(int width, int height)
-{   
+{
     //If everthing is OK and initialization successful function returns 0 (SDL_Init)
-    if(SDL_Init(SDL_INIT_EVERYTHING) != 0){
+    if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
+    {
         std::cerr << "Error initializing SDL" << std::endl;
         return;
     }
 
-    if(TTF_Init() != 0){
+    if (TTF_Init() != 0)
+    {
         std::cerr << "Error initializing SDL TTF" << std::endl;
-        
     }
 
     window = SDL_CreateWindow("Game Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
 
-    if(!window){
+    if (!window)
+    {
         std::cerr << "Error creating SDL window" << std::endl;
         return;
     }
@@ -54,51 +55,196 @@ void Game::initialize(int width, int height)
     //Index -1 default driver
     renderer = SDL_CreateRenderer(window, -1, 0);
 
-    if(!renderer){
+    if (!renderer)
+    {
         std::cerr << "Error creating SDL renderer" << std::endl;
         return;
     }
 
-    loadLevel(0);
+    loadLevel(1);
 
     running = true;
 }
 
+void Game::loadLevel(int levelNumber)
+{
+    sol::state lua;
+    lua.open_libraries(sol::lib::base, sol::lib::os, sol::lib::math);
 
-void Game::loadLevel(int levelNumber){
-    
-    assetManager->addTexture("projectile-image", std::string("./assets/images/bullet-friendly.png").c_str());
-    assetManager->addTexture("tank-image", std::string("./assets/images/tank-big-right.png").c_str());
-    assetManager->addTexture("chopper-image", std::string("./assets/images/chopper-spritesheet.png").c_str());
-    assetManager->addTexture("radar-image", std::string("./assets/images/radar.png").c_str());
-    assetManager->addFont("charriot-font", std::string("./assets/fonts/charriot.ttf").c_str(), 14);
+    std::string levelName = "Level" + std::to_string(levelNumber);
 
-    assetManager->addTexture("jungle-tiletexture", std::string("./assets/tilemaps/jungle.png").c_str());
-    map = new Map("jungle-tiletexture", 2, 32);
-    map->loadMap("./assets/tilemaps/jungle.map", 25, 20);
+    lua.script_file("./assets/scripts/" + levelName + ".lua");
 
-    
-    Entity& tankEntity = manager.addEntity("tank", LayerType::ENEMY_LAYER);
-    tankEntity.addComponent<TransformComponent>(150, 500, 0, 0, 32, 32, 1);
-    tankEntity.addComponent<SpriteComponent>("tank-image");
-    tankEntity.addComponent<ColliderComponent>("enemy", 0, 0, 32, 32);
-    tankEntity.addComponent<KeyboardControlComponent>("up", "down", "right", "left", "space");
+    sol::table levelData = lua[levelName];
 
-    chopperEntity.addComponent<TransformComponent>(240, 106, 0, 0, 32, 32, 1);
-    chopperEntity.addComponent<SpriteComponent>("chopper-image",2 ,90, true, false);
-    chopperEntity.addComponent<KeyboardControlComponent>("w", "s", "d", "a", "space");
-    chopperEntity.addComponent<ColliderComponent>("player", WINDOW_WIDTH/2, 0, 32, 32);
-    
+    //LOAD ASSETS
+    sol::table levelAssets = levelData["assets"];
+    unsigned int assetIndex = 0;
+    while (true)
+    {
+        sol::optional<sol::table> existsAssetIndexNode = levelAssets[assetIndex];
+        if (existsAssetIndexNode == sol::nullopt)
+        {
+            break;
+        }
+        else
+        {
+            sol::table asset = levelAssets[assetIndex];
+            std::string assetType = asset["type"];
 
-    Entity& radarEntity = manager.addEntity("Radar", LayerType::UI_LAYER);
-    radarEntity.addComponent<TransformComponent>(720, 15, 0, 0, 64, 64, 1);
-    radarEntity.addComponent<SpriteComponent>("radar-image", 8 ,150, false, true);
-    
-    Entity& labelLevelName(manager.addEntity("LabelLevelName", LayerType::UI_LAYER));
-    labelLevelName.addComponent<TextLabelComponent>(10, 10, "First Level...", "charriot-font", WHITE_COLOR);
+            if (assetType.compare("texture") == 0)
+            {
+                std::string assetId = asset["id"];
+                std::string assetFile = asset["file"];
+                assetManager->addTexture(assetId, assetFile.c_str());
+            }
+            if (assetType.compare("font") == 0)
+            {
+                std::string assetId = asset["id"];
+                std::string assetFile = asset["file"];
+                int fontSize = asset["fontSize"];
+                assetManager->addFont(assetId, assetFile.c_str(), fontSize);
+            }
+        }
+        assetIndex++;
+    }
 
+    //LOAD MAP AND TILE INFO
+    sol::table levelMap = levelData["map"];
+    std::string mapTextureId = levelMap["textureAssetId"];
+    std::string mapFile = levelMap["file"];
+    map = new Map(mapTextureId, static_cast<int>(levelMap["scale"]), static_cast<int>(levelMap["tileSize"]));
+    map->loadMap(mapFile, static_cast<int>(levelMap["mapSizeX"]), static_cast<int>(levelMap["mapSizeY"]));
 
-    //manager.listAllEntities();
+    //LOAD ENTITIES
+    sol::table levelEntities = levelData["entities"];
+    unsigned int entityIndex = 0;
+
+    while (true)
+    {
+        sol::optional<sol::table> existsEntityNode = levelEntities[entityIndex];
+
+        if (existsEntityNode == sol::nullopt)
+        {
+            break;
+        }
+        else
+        {
+            sol::table entity = levelEntities[entityIndex];
+            std::string entityName = entity["name"];
+            LayerType entityLayerType = static_cast<LayerType>(static_cast<int>(entity["layer"]));
+
+            //Add new entity
+            auto &newEntity(manager.addEntity(entityName, entityLayerType));
+
+            //Add transform component
+            sol::optional<sol::table> existsTransformComponent = entity["components"]["transform"];
+            if (existsTransformComponent != sol::nullopt)
+            {
+                newEntity.addComponent<TransformComponent>(
+                static_cast<int>(entity["components"]["transform"]["position"]["x"]), 
+                static_cast<int>(entity["components"]["transform"]["position"]["y"]), 
+                static_cast<int>(entity["components"]["transform"]["velocity"]["x"]), 
+                static_cast<int>(entity["components"]["transform"]["velocity"]["y"]), 
+                static_cast<int>(entity["components"]["transform"]["width"]), 
+                static_cast<int>(entity["components"]["transform"]["height"]), 
+                static_cast<int>(entity["components"]["transform"]["scale"])
+                );
+            }
+
+            //Add sprite component
+            sol::optional<sol::table> existsSpriteComponent = entity["components"]["sprite"];
+            if (existsSpriteComponent != sol::nullopt)
+            {
+                std::string textureId = entity["components"]["sprite"]["textureAssetId"];
+                bool animated = entity["components"]["sprite"]["animated"];
+                if(animated){
+                    newEntity.addComponent<SpriteComponent>(
+                    textureId.c_str(),
+                    static_cast<int>(entity["components"]["sprite"]["frameCount"]), 
+                    static_cast<int>(entity["components"]["sprite"]["animationSpeed"]), 
+                    static_cast<bool>(entity["components"]["sprite"]["hasDirections"]), 
+                    static_cast<bool>(entity["components"]["sprite"]["fixed"])
+                    );
+                }else
+                {
+                    std::string textureId = entity["components"]["sprite"]["textureAssetId"];
+                    newEntity.addComponent<SpriteComponent>(textureId.c_str());
+                }
+
+            }
+
+            //Add collider component
+            sol::optional<sol::table> existsColliderComponent = entity["components"]["collider"];
+            if(existsColliderComponent != sol::nullopt){
+                std::string colliderTag = entity["components"]["collider"]["tag"];
+                newEntity.addComponent<ColliderComponent>(
+                colliderTag,
+                static_cast<int>(entity["components"]["transform"]["position"]["x"]), 
+                static_cast<int>(entity["components"]["transform"]["position"]["y"]), 
+                static_cast<int>(entity["components"]["transform"]["width"]), 
+                static_cast<int>(entity["components"]["transform"]["height"]) 
+                );
+            }
+
+            //Add input control component
+            sol::optional<sol::table> existsInputComponent = entity["components"]["input"];
+            if(existsInputComponent != sol::nullopt){
+                sol::optional<sol::table> existsKeyboardInputComponent = entity["components"]["input"]["keyboard"];
+                if(existsKeyboardInputComponent != sol::nullopt){
+                    std::string upKey = entity["components"]["input"]["keyboard"]["up"];
+                    std::string downKey = entity["components"]["input"]["keyboard"]["down"];
+                    std::string rightKey = entity["components"]["input"]["keyboard"]["right"];
+                    std::string leftKey = entity["components"]["input"]["keyboard"]["left"];
+                    std::string shootKey = entity["components"]["input"]["keyboard"]["shoot"];
+                    newEntity.addComponent<KeyboardControlComponent>(upKey, downKey, rightKey, leftKey, shootKey);
+                }
+            }
+            
+            // Add projectile emitter component
+            sol::optional<sol::table> existsProjectileEmitterComponent = entity["components"]["projectileEmitter"];
+            if (existsProjectileEmitterComponent != sol::nullopt) {
+                int parentEntityXPos = entity["components"]["transform"]["position"]["x"];
+                int parentEntityYPos = entity["components"]["transform"]["position"]["y"];
+                int parentEntityWidth = entity["components"]["transform"]["width"];
+                int parentEntityHeight = entity["components"]["transform"]["height"];
+                int projectileWidth = entity["components"]["projectileEmitter"]["width"];
+                int projectileHeight = entity["components"]["projectileEmitter"]["height"];
+                int projectileSpeed = entity["components"]["projectileEmitter"]["speed"];
+                int projectileRange = entity["components"]["projectileEmitter"]["range"];
+                int projectileAngle = entity["components"]["projectileEmitter"]["angle"];
+                bool projectileShouldLoop = entity["components"]["projectileEmitter"]["shouldLoop"];
+                std::string textureAssetId = entity["components"]["projectileEmitter"]["textureAssetId"];
+                Entity& projectile(manager.addEntity("projectile", PROJECTILE_LAYER));
+                projectile.addComponent<TransformComponent>(
+                    parentEntityXPos + (parentEntityWidth / 2),
+                    parentEntityYPos + (parentEntityHeight / 2),
+                    0,
+                    0,
+                    projectileWidth,
+                    projectileHeight,
+                    1
+                );
+                projectile.addComponent<SpriteComponent>(textureAssetId.c_str());
+                projectile.addComponent<ProjectileEmitterComponent>(
+                    projectileSpeed,
+                    projectileAngle,
+                    projectileRange,
+                    projectileShouldLoop
+                );
+                projectile.addComponent<ColliderComponent>(
+                    "PROJECTILE",
+                    parentEntityXPos,
+                    parentEntityYPos,
+                    projectileWidth,
+                    projectileHeight
+                );
+            }
+        }
+        entityIndex++;
+    }
+
+    mainPlayer = manager.getEntityByName("player");
 }
 
 bool Game::isRunning() const
@@ -106,7 +252,8 @@ bool Game::isRunning() const
     return running;
 }
 
-void Game::processInput(){   
+void Game::processInput()
+{
 
     SDL_PollEvent(&event);
 
@@ -115,23 +262,19 @@ void Game::processInput(){
     case SDL_QUIT:
         running = false;
         break;
-    
+
     case SDL_KEYDOWN:
 
-        if(event.key.keysym.sym == SDLK_ESCAPE){
+        if (event.key.keysym.sym == SDLK_ESCAPE)
+        {
             running = false;
-        }else if(prev != SDLK_F1 && event.key.keysym.sym == SDLK_F1){
+        }
+        else if (prev != SDLK_F1 && event.key.keysym.sym == SDLK_F1)
+        {
             Game::debug = !debug;
             std::cout << "Debug ON" << std::endl;
             prev = SDLK_F1;
-        }else if(prev != SDLK_SPACE && event.key.keysym.sym == SDLK_SPACE){
-            Entity& projectile = manager.addEntity("projectile", LayerType::PROJECTILE_LAYER);
-            projectile.addComponent<TransformComponent>(150+16, 500+16, 0, 0, 4, 4, 1);
-            projectile.addComponent<SpriteComponent>("projectile-image");
-            projectile.addComponent<ColliderComponent>("projectile", 150+16, 500+16, 4, 4);
-            projectile.addComponent<ProjectileEmitterComponent>(50, 270, 200, false);
         }
-
         break;
 
     case SDL_KEYUP:
@@ -139,17 +282,15 @@ void Game::processInput(){
         break;
     default:
         break;
-
     }
-
 }
 
-void Game::update(){ 
-    
+void Game::update()
+{
     //Delta time is the difference is the ticks from last frame converted to seconds
-    float deltaTime = (SDL_GetTicks() - ticksLastFrame) / 1000.0f; 
+    float deltaTime = (SDL_GetTicks() - ticksLastFrame) / 1000.0f;
 
-    //Clamp deltaTime to a maximum value to be able to prevent time travels 
+    //Clamp deltaTime to a maximum value to be able to prevent time travels
     deltaTime = (deltaTime > 0.05) ? 0.05 : deltaTime;
 
     // Sets the new ticks for the current frame to be used in the next pass
@@ -160,11 +301,10 @@ void Game::update(){
     checkCollisions();
 
     handleCameraMovement();
-
 }
 
-
-void Game::render(){   
+void Game::render()
+{
 
     /*
     * Clear the back buffer
@@ -174,28 +314,32 @@ void Game::render(){
 
     //Wait until 16ms has elapsed since the laBst frame
     uint32_t timeToWait = FRAME_TARGET_TIME - (SDL_GetTicks() - ticksLastFrame);
-    if(timeToWait > 0 && timeToWait <= FRAME_TARGET_TIME){
+    if (timeToWait > 0 && timeToWait <= FRAME_TARGET_TIME)
+    {
         SDL_Delay(timeToWait);
     }
 
     SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255);
     SDL_RenderClear(renderer);
 
-    if(manager.hasNoEntities()){
+    if (manager.hasNoEntities())
+    {
         return;
-    }else{
+    }
+    else
+    {
         manager.render();
     }
-    
 
     SDL_RenderPresent(renderer);
 }
 
-void Game::handleCameraMovement(){
-    TransformComponent* mainPlayerTransform = chopperEntity.getComponent<TransformComponent>();
+void Game::handleCameraMovement()
+{
+    TransformComponent *mainPlayerTransform = mainPlayer->getComponent<TransformComponent>();
 
-    camera.x = mainPlayerTransform->position.x - (WINDOW_WIDTH/2);
-    camera.y = mainPlayerTransform->position.y - (WINDOW_HEIGHT/2);
+    camera.x = mainPlayerTransform->position.x - (WINDOW_WIDTH / 2);
+    camera.y = mainPlayerTransform->position.y - (WINDOW_HEIGHT / 2);
 
     camera.x = camera.x < 0 ? 0 : camera.x;
     camera.y = camera.y < 0 ? 0 : camera.y;
@@ -203,16 +347,13 @@ void Game::handleCameraMovement(){
     camera.y = camera.y > camera.h ? camera.h : camera.y;
 }
 
-void Game::checkCollisions(){
-    std::string collisionTagType = manager.checkEntityCollisions(chopperEntity);
-    if(collisionTagType.compare("enemy") == 0){
-        //TODO: do something
-        manager.getEntityByName("tank")->destroy();
-        manager.getEntityByName("projectile")->destroy();
-    }
+void Game::checkCollisions()
+{
+    //FEATURE WORK
 }
 
-void Game::destroy(){
+void Game::destroy()
+{
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
